@@ -8,23 +8,34 @@ namespace EventLogger
         static void Main(string[] args)
         {
             Logger<Log> logger = new Logger<Log>(5);
-            
-            logger.AddLog(new Log("Pepa", "Hello", 2, DateTime.Now));
-            logger.AddLog(new Log("Pepa", "F", 1, DateTime.Now));
-            Console.WriteLine(/*logger.Extract(*/DateTime.Today);
+
+            logger.AddLog(new Log("Pepa", "Hello", 1, DateTime.Now));
+            logger.AddLog(new Log("Pepa", "F", 2, DateTime.Now));
+            Console.WriteLine(logger.Extract());
             
         }
     }
-    class Logger<T>
+    public class Logger<T>
     {
         private T[] buffer;
         private int count;
+        private int length;
+        public int Length
+        {
+            get => length;
+            set => length = value;
+        }
         public delegate void NewLog(T log);
         public event NewLog OnNewLog;
         public Logger(int capacity)
         {
+            if (capacity < 1)
+            {
+                throw new ArgumentOutOfRangeException("Capacity has to be bigger than 0 and integer");
+            }
             buffer = new T[capacity];
             count = 0;
+            Length = capacity;
             OnNewLog += WriteLog;
         }
 
@@ -33,6 +44,7 @@ namespace EventLogger
             T[] temp = new T[buffer.Length];
             Array.Copy(buffer, temp, buffer.Length);
             buffer = new T[temp.Length + size];
+            Length = buffer.Length;
             foreach (var item in temp)
             {
                 buffer.Append(item);
@@ -44,6 +56,7 @@ namespace EventLogger
             T[] temp = new T[buffer.Length];
             Array.Copy(buffer, temp, buffer.Length);
             buffer = new T[temp.Length - size];
+            Length = buffer.Length;
             count = 0;
             foreach (var item in temp.Reverse())
             {
@@ -73,9 +86,12 @@ namespace EventLogger
         public string Extract()
         {
             StringBuilder sb = new StringBuilder();
-            foreach (var item in buffer.Order())
+            foreach (var item in buffer.OrderDescending())
             {
-                sb.AppendLine(item?.ToString());
+                if (item != null)
+                {
+                    sb.AppendLine(item.ToString());
+                }
             }
             return sb.ToString();
         }
@@ -84,7 +100,7 @@ namespace EventLogger
             Console.WriteLine(log);
         }
     }
-    class Log : IComparable
+    public class Log : IComparable
     {
         
         private int priority;
@@ -132,6 +148,6 @@ namespace EventLogger
             }
             return 0;
         }
-        public override string ToString() => $"{User} {Priority} {TimeCreated}\n{Message}";
+        public override string ToString() => $"{User} {Priority} {TimeCreated.ToString("d/M/yyyy")}\n{Message}";
     }
 }
