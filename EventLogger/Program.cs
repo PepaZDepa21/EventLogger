@@ -7,7 +7,7 @@ namespace EventLogger
     {
         static void Main(string[] args)
         {
-            Logger<Log> logger = new Logger<Log>(5);
+            Logger logger = new Logger(5);
 
             logger.AddLog(new Log("Pepa", "Hello", 1, DateTime.Now));
             logger.AddLog(new Log("Pepa", "F", 2, DateTime.Now));
@@ -15,17 +15,22 @@ namespace EventLogger
             
         }
     }
-    public class Logger<T>
+    public class Logger
     {
-        private T[] buffer;
+        private Log[] buffer;
         private int count;
+        public int Count
+        {
+            get => count;
+            set => count = value;
+        }
         private int length;
         public int Length
         {
             get => length;
             set => length = value;
         }
-        public delegate void NewLog(T log);
+        public delegate void NewLog(string logContent);
         public event NewLog OnNewLog;
         public Logger(int capacity)
         {
@@ -33,71 +38,78 @@ namespace EventLogger
             {
                 throw new ArgumentOutOfRangeException("Capacity has to be bigger than 0 and integer");
             }
-            buffer = new T[capacity];
-            count = 0;
+            buffer = new Log[capacity];
+            Count = 0;
             Length = capacity;
             OnNewLog += WriteLog;
         }
 
         public void Expand(int size)
         {
-            T[] temp = new T[buffer.Length];
+            Log[] temp = new Log[buffer.Length];
             Array.Copy(buffer, temp, buffer.Length);
-            buffer = new T[temp.Length + size];
+            buffer = new Log[temp.Length + size];
             Length = buffer.Length;
-            foreach (var item in temp)
+            for (int i = 0; i < temp.Length; i++)
             {
-                buffer.Append(item);
+                if (temp[i] != null)
+                {
+                    buffer[i] = temp[i];
+                }
             }
 
         }
         public void Reduce(int size)
         {
-            T[] temp = new T[buffer.Length];
+            Log[] temp = new Log[buffer.Length];
             Array.Copy(buffer, temp, buffer.Length);
-            buffer = new T[temp.Length - size];
+            buffer = new Log[temp.Length - size];
             Length = buffer.Length;
-            count = 0;
-            foreach (var item in temp.Reverse())
+            Count = 0;
+            while(Count < Length)
             {
-                buffer.Append(item);
-                count++;
+                buffer[Count] = temp[Count + size];
+                Count++;
             }
-            buffer.Reverse();
         }
         public void Clear()
         {
             Array.Clear(buffer, 0, buffer.Length);
-            count = 0;
+            Count = 0;
         }
-        public void AddLog(T log)
+        public void AddLog(Log log)
         {
-            if (count == buffer.Length)
+            
+            if (Count == buffer.Length)
             {
                 buffer = buffer.Skip(0).ToArray();
+                for (int i = 1; i < Length; i++)
+                {
+                    buffer[i - 1] = buffer[i];
+                }
+                buffer[Length-1] = log;
             }
-            else if (count < buffer.Length)
+            else if (Count < buffer.Length)
             {
-                count++;
+                buffer[Count++] = log;
             }
-            buffer.Append(log);
-            OnNewLog.Invoke(log);
+            OnNewLog.Invoke(log.Message);
         }
         public string Extract()
         {
             StringBuilder sb = new StringBuilder();
-            foreach (var item in buffer.OrderDescending())
+            foreach (var item in buffer.Order())
             {
                 if (item != null)
                 {
-                    sb.AppendLine(item.ToString());
+                    sb.Append(item.ToString() + "\n");
                 }
             }
             return sb.ToString();
         }
-        public static void WriteLog(T log)
+        public static void WriteLog(string logContent)
         {
-            Console.WriteLine(log);
+            Console.WriteLine(logContent);
         }
     }
     public class Log : IComparable
