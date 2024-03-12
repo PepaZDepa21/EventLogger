@@ -8,11 +8,8 @@ namespace EventLogger
         static void Main(string[] args)
         {
             Logger logger = new Logger(5);
-
-            logger.AddLog(new Log("Pepa", "Hello", 1, DateTime.Now));
-            logger.AddLog(new Log("Pepa", "F", 2, DateTime.Now));
+            logger.AddLog(new Log("Pepa", "Oprava tiskárny", 2, DateTime.Now));
             Console.WriteLine(logger.Extract());
-            
         }
     }
     public class Logger

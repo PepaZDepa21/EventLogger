@@ -10,7 +10,8 @@ namespace EventLoggerTest
         public void LogString()
         {
             Log log = new Log("Pepa", "Hello", 1, DateTime.Today);
-            Assert.IsTrue(log.ToString() == "Pepa 1 11/3/2024\nHello");
+            DateTime dt = DateTime.Now;
+            Assert.IsTrue(log.ToString() == $"Pepa 1 {dt.ToString("d/M/yyyy")}\nHello");
         }
         [TestMethod]
         public void LogCompareSame() 
@@ -40,7 +41,7 @@ namespace EventLoggerTest
         [TestMethod]
         public void LoggerExpand() 
         {
-            Logger<Log> logger = new Logger<Log>(5);
+            Logger logger = new Logger(5);
             logger.AddLog(new Log("Pepa", "Hello", 1, DateTime.Now));
             logger.AddLog(new Log("Pepa", "F", 2, DateTime.Now));
             logger.Expand(2);
@@ -49,7 +50,7 @@ namespace EventLoggerTest
         [TestMethod]
         public void LoggerReduce()
         {
-            Logger<Log> logger = new Logger<Log>(5);
+            Logger logger = new Logger(5);
             logger.AddLog(new Log("Pepa", "Hello", 1, DateTime.Now));
             logger.AddLog(new Log("Pepa", "F", 2, DateTime.Now));
             logger.AddLog(new Log("Pepa", "Hell", 4, DateTime.Now));
@@ -61,20 +62,32 @@ namespace EventLoggerTest
         [TestMethod]
         public void LoggerExtract()
         {
-            Logger<Log> logger = new Logger<Log>(5);
+            Logger logger = new Logger(5);
             logger.AddLog(new Log("Pepa", "Hello", 1, DateTime.Now));
             logger.AddLog(new Log("Pepa", "F", 2, DateTime.Now));
-            Assert.IsTrue(logger.Extract() == "Pepa 2 11/3/2024\nF\nPepa 1 11/3/2024\nHello\n");
+            DateTime dt = DateTime.Now;
+            Assert.IsTrue(logger.Extract() == $"Pepa 2 {dt.ToString("d/M/yyyy")}\nF\nPepa 1 {dt.ToString("d/M/yyyy")}\nHello\n");
         }
         [TestMethod]
         public void LoggerOverflow()
         {
-            Logger<Log> logger = new Logger<Log>(3);
+            Logger logger = new Logger(3);
             logger.AddLog(new Log("Pepa", "Hello", 1, DateTime.Now));
             logger.AddLog(new Log("Pepa", "F", 2, DateTime.Now));
             logger.AddLog(new Log("Pepa", "Hello", 1, DateTime.Now));
             logger.AddLog(new Log("Pepa", "F", 3, DateTime.Now));
-            Assert.IsTrue(logger.Extract() == "Pepa 3 11/3/2024\nF\nPepa 1 11/3/2024\nHello\nPepa 2 11/3/2024\nF\n");
+            DateTime dt = DateTime.Now;
+            Assert.IsTrue(logger.Extract() == $"Pepa 3 {dt.ToString("d/M/yyyy")}\nF\nPepa 1 {dt.ToString("d/M/yyyy")}\nHello\nPepa 2 {dt.ToString("d/M/yyyy")}\nF\n");
+        }
+        [TestMethod]
+        public void LoggerClear() 
+        {
+            Logger logger = new Logger(3);
+            logger.AddLog(new Log("Pepa", "Hello", 1, DateTime.Now));
+            logger.AddLog(new Log("Pepa", "F", 2, DateTime.Now));
+            logger.Clear();
+            Assert.IsTrue(logger.Extract() == string.Empty);
+
         }
     }
 }
